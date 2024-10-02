@@ -22,13 +22,11 @@ def main():
     longpoll = VkBotLongPoll(vk_session, group_id=config.vkbot.group_id)
     vk = vk_session.get_api()
 
-    bot = TeleBot(token=config.tgbot.token)
-
     tg_posts = Queue()
     ds_posts = Queue()
 
     vk_bot = Thread(target=vkontakte_bot.launch, args=(longpoll, tg_posts, ds_posts), daemon=True)
-    tg_bot = Thread(target=telegram_bot.launch, args=(bot, config.tgbot.chat_id, tg_posts), daemon=True)
+    tg_bot = Thread(target=telegram_bot.launch, args=(config,), daemon=True)
     # ds_bot = Thread(target=discord_bot.launch,   args=(ds_posts,), daemon=True)
 
     vk_bot.start()
