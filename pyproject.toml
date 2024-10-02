@@ -15,7 +15,9 @@ requires-python = ">=3.10"
 dependencies = [
     "discord.py",
     "aiogram",
+    "pyTelegramBotAPI",
     "toml",
+    "vk_api"
 ]
 [project.optional-dependencies]
 test = [
@@ -31,3 +33,6 @@ format = [
 
 [tool.black]
 line-length = 120
+
+[project.scripts]
+bots = "bots.main:main"

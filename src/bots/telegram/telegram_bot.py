@@ -7,59 +7,38 @@ from threading import Thread
 import telebot
 
 
-# Reading configs.json into config (token)
-with open("bots/telegram/config.json", "r") as config_file:
-    config = load(config_file)
+class Commands:
+    def __init__(self, chat_id, bot):
+        self.chat_id = chat_id
+        self.bot = bot
+        self.add_command(self.ping, commands=["ping"])
 
-bot = telebot.TeleBot(config["token"])
+    def ping(self, message):
+        self.bot.reply_to(message, "pong")
 
-# Adding functions to the bot
+    def add_command(self, handler, commands):
+        self.bot.message_handler(commands=commands)(handler)
 
-
-@bot.message_handler(commands=["register"])
-def get_chat_id(message: telebot.types.Message):
-    config["chat_id"] = message.chat.id
-    with open("bots/telegram/config.json", "w") as file:
-        dump(config, file)
-
-
-# This function is called on the "ping" and "Ping" commands
-@bot.message_handler(commands=["ping", "Ping"])
-def ping(message):
-    bot.reply_to(message, "pong")
-
-
-def publish_post(post: map):
-    if post["photo"] or post["video"]:
-        #print(len(post["photo"]))
-        #print(post["photo"])
-        bot.send_media_group(chat_id=config["chat_id"], media=post["photo"]+post["video"])
-    if post["text"]:
-        bot.send_message(chat_id=config["chat_id"], text=post["text"])
-    if post["doc"]:
-        bot.send_media_group(chat_id=config["chat_id"], media=post["doc"])
+    def publish_post(self, post: map):
+        if post["photo"] or post["video"]:
+            self.bot.send_media_group(chat_id=self.chat_id, media=post["photo"] + post["video"])
+        if post["text"]:
+            self.bot.send_message(chat_id=self.chat_id, text=post["text"])
+        if post["doc"]:
+            self.bot.send_media_group(chat_id=self.chat_id, media=post["doc"])
 
 
 # Launch bot's loop and handlers
-def launch(posts_stream: Queue):
-    print("Launching: TG bot")
+def launch(bot, chat_id, posts_stream: Queue):
+    print("Launching: TG listener")
+    commands = Commands(chat_id, bot)
+
     try:
         handlers = Thread(target=bot.infinity_polling, daemon=True)
         handlers.start()
     except Exception as ex:
         print(ex)
 
-    # Если бот еще не знает chat_id
-    if not config["chat_id"]:
-        print("Bot was not registered. Send /register to solve this.")
-        while not config["chat_id"]:
-            pass
-
     while True:
-        if not posts_stream.empty():
-            publish_post(posts_stream.get())
-        sleep(5)
-
-
-# if __name__ == "__main__":
-# 	launch(Queue())
+        c = commands.publish_post(posts_stream.get(True))
+        print(c)

@@ -1,6 +1,6 @@
 [dsbot]
 token="abc"
-chat_id="not sure"
+guild_id="not sure"
 
 [tgbot]
 token="def"
@@ -8,4 +8,4 @@ chat_id=125
 
 [vkbot]
 token="ghi"
-chat_id="not sure too"
+group_id="not sure too"

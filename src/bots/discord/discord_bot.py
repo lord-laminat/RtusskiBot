@@ -17,18 +17,14 @@ bot = commands.Bot(command_prefix="/", intents=intents)
 
 # Initialization of the function responsible for the bot's response to the command "<prefix>ping"
 @bot.command("ping")
-async def Ping(ctx: commands.context):
+async def ping(ctx: commands.context):
     await ctx.send("pong")
 
 
 # Launching function
-def launch():
-    bot.run(config["token"])
+def launch(token):
+    bot.run(token)
 
 
 if __name__ == "__main__":
-<<<<<<<< HEAD:src/bots/discord/discord_bot.py
 	launch()
-========
-    launch()
->>>>>>>> origin/vk_listener:bots/discord/discord_bot.py

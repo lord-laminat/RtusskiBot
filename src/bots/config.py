@@ -6,7 +6,7 @@ import toml
 @dataclass
 class DiscordBot:
     token: str
-    chat_id: str
+    guild_id: str
 
 
 @dataclass
@@ -18,7 +18,7 @@ class TelegramBot:
 @dataclass
 class VkontakteBot:
     token: str
-    chat_id: str
+    group_id: str
 
 
 @dataclass
