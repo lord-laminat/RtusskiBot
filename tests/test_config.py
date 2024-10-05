@@ -8,4 +8,3 @@ def test_config_from_path():
     assert config.dsbot == DiscordBot("abc", "not sure")
     assert config.tgbot == TelegramBot("def", 125)
     assert config.vkbot == VkontakteBot("ghi", "not sure too")
-

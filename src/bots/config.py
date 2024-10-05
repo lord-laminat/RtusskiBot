@@ -21,18 +21,16 @@ class VkontakteBot:
     group_id: str
 
 
-@dataclass
-class Config:
-    dsbot: DiscordBot
-    tgbot: TelegramBot
-    vkbot: VkontakteBot
-
-
-def load_config(path: str) -> Config:
+def load_tgbot_config(path: str) -> TelegramBot:
     data = toml.load(open(path))
-    return Config(
-            dsbot=DiscordBot(**data["dsbot"]),
-            tgbot=TelegramBot(**data["tgbot"]),
-            vkbot=VkontakteBot(**data["vkbot"]),
-        )
+    return TelegramBot(**data["tgbot"])
 
+
+def load_discord_config(path: str) -> TelegramBot:
+    data = toml.load(open(path))
+    return DiscordBot(**data["dsbot"])
+
+
+def load_vk_config(path: str) -> TelegramBot:
+    data = toml.load(open(path))
+    return VkontakteBot(**data["vkbot"])

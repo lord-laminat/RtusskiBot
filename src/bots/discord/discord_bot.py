@@ -27,4 +27,4 @@ def launch(token):
 
 
 if __name__ == "__main__":
-	launch()
+    launch()

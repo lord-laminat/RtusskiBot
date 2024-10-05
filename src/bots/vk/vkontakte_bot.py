@@ -1,57 +1,60 @@
-from json import load, dump
-from queue import Queue
-import vk_api
-from telebot.types import InputMediaPhoto, InputMediaDocument, InputMediaVideo
-import requests
+import logging
+import os
+import asyncio
+
+from vkbottle import Bot
+from vkbottle.tools import LoopWrapper
+
+from bots.config import load_vk_config
+from bots.common.content import Content, Attachments
+
+config = load_vk_config(os.getenv("BOTS_CONFIG_PATH"))
+
+bot = Bot(config.token)
+
+logger = logging.getLogger(__name__)
 
 
-def get_attachment_url(attachment):
-    match (attachment["type"]):
-        case "doc":
-            response = requests.get(attachment["doc"]["url"])
-            if response.status_code == 200:
-                return InputMediaDocument(media=response.content, caption=attachment["doc"]["title"])
-        case "photo":
-            return InputMediaPhoto(attachment["photo"]["orig_photo"]["url"])
-        # case "video":
-        # response = requests.get(
-        #    "https://vk.com/video_ext.php?oid={}id={}&hd=4&autoplay=1".format(attachment["video"]["owner_id"], attachment["video"]["id"])
-        # )
-        # print(response.content)
-        # if response.status_code == 200:
-        # print("https://vk.com/video_ext.php?oid={}id={}&hd=2&autoplay=1".format(attachment["video"]["owner_id"], attachment["video"]["id"]))
-        # return InputMediaVideo(media="https://vk.com/video_ext.php?oid={}id={}&hd=2&autoplay=1".format(attachment["video"]["owner_id"], attachment["video"]["id"]))
+@bot.on.message()
+async def foo(message):
+    # default polling can not provide all the images if there at least 4 images
+    # that's why I needed to do another request to get full message and
+    # take all the attachments from it.
+
+    # see https://dev.vk.com/ru/method/messages.getByConversationMessageId
+    data = {
+        "peer_id": message.peer_id,
+        "conversation_message_ids": message.conversation_message_id,
+    }
+    res = await bot.api.request(
+        "messages.getByConversationMessageId", data=data
+    )
+    full_message = res["response"]["items"][0]
+    attachments = Attachments(text=full_message["text"])
+
+    for at in full_message["attachments"]:
+        if at["type"] == "doc":
+            attachments.documents.append(
+                Content(at["doc"]["title"], at["doc"]["url"])
+            )
+        if at["type"] == "photo":
+            # sort by height and get the second highest
+            image_url = sorted(
+                at["photo"]["sizes"], key=lambda x: x["height"]
+            )[-2]["url"]
+            attachments.images.append(Content(at["photo"]["text"], image_url))
+        if at["type"] == "video":
+            # TODO implement video support
+            pass
+
+    bot.telegram_queue.put_nowait(attachments)
+    bot.discord_posts.put_nowait(attachments)
+    await message.answer("Hi")
 
 
-def get_attachments(message_data: map, type: str) -> list[InputMediaPhoto]:
-    res = []
+async def main(my_posts, tgbot_posts, dbot_queue):
 
-    for attachment in message_data["attachments"]:
-        if attachment["type"] == type:
-            res.append(get_attachment_url(attachment))
-    return res
-
-
-def get_text(message_data: map) -> str:
-    return message_data["text"]
-
-
-def launch(longpoll: vk_api.bot_longpoll.VkBotLongPoll, tg_posts: Queue, ds_posts: Queue):
-    print("Launching: VK listener")
-    while True:
-        try:
-            for event in longpoll.listen():
-                post = {
-                    "text": get_text(event.message),
-                    "photo": get_attachments(event.message, "photo"),
-                    "doc": get_attachments(event.message, "doc"),
-                    "video": get_attachments(event.message, "video"),
-                }
-                tg_posts.put(post)
-                ds_posts.put(post)
-
-                if __name__ == "__main__":
-                    ds_posts.get()
-                    print(tg_posts.get())
-        except requests.exceptions.ReadTimeout:
-            ...
+    bot.telegram_queue = tgbot_posts
+    bot.discord_posts = dbot_queue
+    bot.loop_wrapper = LoopWrapper(loop=asyncio.get_running_loop())
+    await bot.run_polling()
