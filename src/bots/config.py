@@ -21,7 +21,7 @@ class VkontakteBot:
     group_id: str
 
 
-def load_tgbot_config(path: str) -> TelegramBot:
+def load_tg_config(path: str) -> TelegramBot:
     data = toml.load(open(path))
     return TelegramBot(**data["tgbot"])
 

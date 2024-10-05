@@ -12,14 +12,14 @@ from aiogram.types import (
 )
 from aiogram.filters import Command
 
-from bots.config import load_tgbot_config
+from bots.config import load_tg_config
 from bots.common.content import Attachments
 
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.DEBUG)
 
-config = load_tgbot_config(os.getenv("BOTS_CONFIG_PATH"))
+config = load_tg_config(os.getenv("BOTS_CONFIG_PATH"))
 
 dp = Dispatcher()
 
