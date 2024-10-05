@@ -1,0 +1,12 @@
+[vkbot]
+token = "here is ur token"
+group_id = 123123
+
+[tgbot]
+token = "here is ur token"
+chat_id = 456456
+
+[dsbot]
+token = "here is ur token"
+guild_id = "anything"
+

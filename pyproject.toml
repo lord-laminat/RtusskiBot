@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project]
+name = "rtu_bot"
+version = "0.0.1"
+requires-python = ">=3.10"
+dependencies = [
+    "discord.py",
+    "aiogram",
+    "toml",
+    "vkbottle",
+]
+[project.optional-dependencies]
+test = [
+    "pytest"
+]
+lint = [
+    "flake8",
+    "mypy"
+]
+format = [
+  "blue"
+]
+
+[tool.black]
+line-length = 79
+
+[project.scripts]
+bots = "bots.main:main"
