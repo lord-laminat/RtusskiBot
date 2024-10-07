@@ -1,4 +1,11 @@
-from bots.config import load_tg_config, load_discord_config, load_vk_config, TelegramBot, DiscordBot, VkontakteBot
+from bots.config import (
+    load_tg_config,
+    load_discord_config,
+    load_vk_config,
+    TelegramBot,
+    DiscordBot,
+    VkontakteBot,
+)
 
 
 def test_config_from_path():
