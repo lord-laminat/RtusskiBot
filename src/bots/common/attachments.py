@@ -4,10 +4,10 @@ from bots.common.content import MessageAttachment
 
 
 class BaseAttachmentsProvider(ABC):
-    @staticmethod
+    # it may require to download files asynchronously
     @abstractmethod
-    def provide_media(attachments: MessageAttachment): ...
+    async def provide_media(attachments: MessageAttachment): ...
 
-    @staticmethod
+    # it may require to download files asynchronously
     @abstractmethod
-    def provide_documents(attachments: MessageAttachment): ...
+    async def provide_documents(attachments: MessageAttachment): ...

@@ -10,30 +10,18 @@ from aiogram.types import (
     InputMediaDocument,
     URLInputFile,
 )
-from aiogram.filters import Command
 from aiogram_album import AlbumMessage
 from aiogram_album.ttl_cache_middleware import TTLCacheAlbumMiddleware
 
 from bots.config import load_tg_config
 from bots.common.attachments import BaseAttachmentsProvider
 from bots.common.content import FullMessageContent, MessageAttachment
-
-
-logger = logging.getLogger(__name__)
-logging.basicConfig(level=logging.DEBUG)
-
-config = load_tg_config(os.getenv("BOTS_CONFIG_PATH"))
-
-dp = Dispatcher()
-TTLCacheAlbumMiddleware(router=dp)
-
-bot = Bot(token=config.token)
+from bots.common.bot import BaseBot, QueueWrapper
 
 
 class AiogramAttachmentsProvider(BaseAttachmentsProvider):
-    @staticmethod
     # TODO add videos support
-    def provide_media(attachments: list[MessageAttachment]):
+    async def provide_media(self, attachments: list[MessageAttachment]):
         media = []
         for at in attachments:
             if at.type == "photo":
@@ -46,8 +34,7 @@ class AiogramAttachmentsProvider(BaseAttachmentsProvider):
                 )
         return media
 
-    @staticmethod
-    def provide_documents(attachments: list[MessageAttachment]):
+    async def provide_documents(self, attachments: list[MessageAttachment]):
         documents = []
         for at in attachments:
             if at.type == "doc":
@@ -59,82 +46,109 @@ class AiogramAttachmentsProvider(BaseAttachmentsProvider):
         return documents
 
 
-class BotCommands:
+class AiogramBot(BaseBot):
     def __init__(self, bot, chat_id, attachments_provider):
         self.bot = bot
         self.chat_id = chat_id
         self.attachments_provider = attachments_provider
 
-    async def send_messages(self, message_content: FullMessageContent):
+    async def send_message(self, message_content: FullMessageContent):
         # basically you want to have this behaviour:
         # text-only: paste text
         # attachment-with-text: use text as caption to attachment
 
         message_text = message_content.text
-        media = self.attachments_provider.provide_media(
+        media = await self.attachments_provider.provide_media(
             message_content.attachments
         )
-        documents = self.attachments_provider.provide_documents(
+        documents = await self.attachments_provider.provide_documents(
             message_content.attachments
         )
         if not (media or documents):  # that was text based message
-            await bot.send_message(self.chat_id, message_text)
+            await self.bot.send_message(self.chat_id, message_text)
         else:
             if media:
                 media[0].caption = message_text
-                await bot.send_media_group(self.chat_id, media=media)
+                await self.bot.send_media_group(self.chat_id, media=media)
             if documents:
                 documents[0].caption = message_text
-                await bot.send_media_group(self.chat_id, media=documents)
+                await self.bot.send_media_group(self.chat_id, media=documents)
 
 
-bot_commands = BotCommands(bot, config.chat_id, AiogramAttachmentsProvider())
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
 
+config = load_tg_config(os.getenv("BOTS_CONFIG_PATH"))
 
-# @dp.message()
-# async def process_plain_text(message: Message):
-#     message_content = FullMessageContent(message.text)
-#     logging.error(message.text)
-#     await message.reply("Resending text...")
-#     await bot.vk_posts.put(message_content)
+dp = Dispatcher()
+TTLCacheAlbumMiddleware(router=dp)
+
+bot = Bot(token=config.token)
+bot_wrapper = AiogramBot(bot, config.chat_id, AiogramAttachmentsProvider())
 
 
 @dp.message(F.media_group_id)
 async def process_message_with_attachments(message: AlbumMessage):
-    message_content = FullMessageContent(message.text)
+    message_content = FullMessageContent(message.caption)
     for m in message:
         if m.photo:
             photo = m.photo
-            attachment = MessageAttachment(
-                "", "", "photo", f"/tmp/{photo[-1].file_id}.jpg"
+            bytes_io_file = await bot.download(photo[-1])
+            message_content.attachments.append(
+                MessageAttachment("", "", "photo", bytes_io_file.read())
             )
-            message_content.attachments.append(attachment)
-            await bot.download(
-                photo[-1], destination=f"/tmp/{photo[-1].file_id}.jpg"
+        if m.video:
+            video = m.video
+            bytes_io_file = await bot.download(video[-1])
+            message_content.attachments.append(
+                MessageAttachment("", "", "photo", bytes_io_file.read())
             )
         if m.document:
             doc = m.document
             filename = doc.file_name
-            filepath = f"/tmp/{doc.file_id}"
-            attachment = MessageAttachment(filename, "", "doc", filepath)
-            message_content.attachments.append(attachment)
-            await bot.download(doc, destination=filepath)
+            bytes_io_file = await bot.download(doc)
+            message_content.attachments.append(
+                MessageAttachment(filename, "", "doc", bytes_io_file.read())
+            )
 
-    print(message_content)
     await bot.vk_posts.put(message_content)
     await message.reply("Resending with attachments...")
 
 
-async def check_queue(queue):
-    while True:
-        message_content = await queue.get()
-        await bot_commands.send_messages(message_content)
+@dp.message()
+async def process_plain_text(message: Message):
+    message_text = message.text or message.caption
+    message_content = FullMessageContent(message_text)
+
+    if message.photo:
+        photo = message.photo
+        bytes_io_file = await bot.download(photo[-1])
+        message_content.attachments.append(
+            MessageAttachment("", "", "photo", bytes_io_file.read())
+        )
+    if message.video:
+        video = message.video
+        bytes_io_file = await bot.download(video)
+        message_content.attachments.append(
+            MessageAttachment("", "", "video", bytes_io_file.read())
+        )
+    if message.document:
+        doc = message.document
+        filename = doc.file_name
+        bytes_io_file = await bot.download(doc)
+        message_content.attachments.append(
+            MessageAttachment(filename, "", "doc", bytes_io_file.read())
+        )
+
+    await bot.vk_posts.put(message_content)
+    await message.reply("Resending...")
 
 
 async def main(my_posts, ds_posts, vk_posts):
     logger.info("starting the application")
+    queue_wrapper = QueueWrapper(bot_wrapper)
     bot.ds_posts = ds_posts
     bot.vk_posts = vk_posts
-    t1 = asyncio.create_task(check_queue(my_posts))
+    t1 = asyncio.create_task(queue_wrapper.process_posts(my_posts))
     t2 = asyncio.create_task(dp.start_polling(bot, handle_signals=False))
     await asyncio.gather(t1, t2, return_exceptions=False)
