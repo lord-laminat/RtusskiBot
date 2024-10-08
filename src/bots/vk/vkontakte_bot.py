@@ -3,16 +3,35 @@ import os
 import asyncio
 
 from vkbottle import Bot
-from vkbottle.tools import LoopWrapper
+from vkbottle.tools import (
+    LoopWrapper,
+    DocMessagesUploader,
+    PhotoMessageUploader,
+)
 
 from bots.config import load_vk_config
-from bots.common.content import Content, Attachments
+from bots.common.content import (
+    MessageAttachment,
+    FullMessageContent,
+)
+from bots.common.bot import QueueWrapper
+from .bot_wrapper import VkbottleBot
+from .attachments import VkBottleAttachmentsProvider
 
 config = load_vk_config(os.getenv("BOTS_CONFIG_PATH"))
 
-bot = Bot(config.token)
-
 logger = logging.getLogger(__name__)
+
+bot = Bot(config.token)
+bot_wrapper = VkbottleBot(
+    bot,
+    config.chat_id,
+    VkBottleAttachmentsProvider(
+        PhotoMessageUploader(bot.api),
+        DocMessagesUploader(bot.api),
+        config.chat_id,
+    ),
+)
 
 
 @bot.on.message()
@@ -20,41 +39,36 @@ async def foo(message):
     # default polling can not provide all the images if there at least 4 images
     # that's why I needed to do another request to get full message and
     # take all the attachments from it.
-
     # see https://dev.vk.com/ru/method/messages.getByConversationMessageId
-    data = {
-        "peer_id": message.peer_id,
-        "conversation_message_ids": message.conversation_message_id,
-    }
-    res = await bot.api.request(
-        "messages.getByConversationMessageId", data=data
+
+    res = await bot.api.messages.get_by_conversation_message_id(
+        peer_id=message.peer_id,
+        conversation_message_ids=message.conversation_message_id,
     )
-    full_message = res["response"]["items"][0]
-    attachments = Attachments(text=full_message["text"])
+    full_message = res.items[0]
+    message_content = FullMessageContent(full_message.text)
 
-    for at in full_message["attachments"]:
-        if at["type"] == "doc":
-            attachments.documents.append(
-                Content(at["doc"]["title"], at["doc"]["url"])
+    for at in full_message.attachments:
+        if at.type.value == "doc":
+            message_content.attachments.append(
+                MessageAttachment(at.doc.title, at.doc.url, "doc")
             )
-        if at["type"] == "photo":
+        if at.type.value == "photo":
             # sort by height and get the second highest
-            image_url = sorted(
-                at["photo"]["sizes"], key=lambda x: x["height"]
-            )[-2]["url"]
-            attachments.images.append(Content(at["photo"]["text"], image_url))
-        if at["type"] == "video":
-            # TODO implement video support
-            pass
+            image_url = sorted(at.photo.sizes, key=lambda x: x.height)[-2].url
+            message_content.attachments.append(
+                MessageAttachment(at.photo.text, image_url, "photo")
+            )
 
-    bot.telegram_queue.put_nowait(attachments)
-    bot.discord_posts.put_nowait(attachments)
-    await message.answer("Hi")
+    bot.telegram_posts.put_nowait(message_content)
+    bot.discord_posts.put_nowait(message_content)
 
 
-async def main(my_posts, tgbot_posts, dbot_queue):
+async def main(my_posts, tgbot_posts):
 
-    bot.telegram_queue = tgbot_posts
-    bot.discord_posts = dbot_queue
+    queue_wrapper = QueueWrapper(bot_wrapper)
+    bot.telegram_posts = tgbot_posts
     bot.loop_wrapper = LoopWrapper(loop=asyncio.get_running_loop())
-    await bot.run_polling()
+    t1 = asyncio.create_task(queue_wrapper.process_posts(my_posts))
+    t2 = asyncio.create_task(bot.run_polling())
+    await asyncio.gather(t1, t2)

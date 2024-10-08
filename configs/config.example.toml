@@ -1,12 +1,11 @@
 [vkbot]
-token = "here is ur token"
-group_id = 123123
+token = "vkontakte_access_key"
+chat_id = 123
 
 [tgbot]
-token = "here is ur token"
-chat_id = 456456
+token = "telegram_bot_token"
+chat_id = 456
 
 [dsbot]
-token = "here is ur token"
-guild_id = "anything"
-
+token = "discord_bot_token"
+channel_id = 789
