@@ -41,27 +41,29 @@ async def foo(message):
     # take all the attachments from it.
     # see https://dev.vk.com/ru/method/messages.getByConversationMessageId
 
-    res = await bot.api.messages.get_by_conversation_message_id(
-        peer_id=message.peer_id,
-        conversation_message_ids=message.conversation_message_id,
-    )
-    full_message = res.items[0]
-    message_content = FullMessageContent(full_message.text)
+    if "#важное" in message.text:
+        res = await bot.api.messages.get_by_conversation_message_id(
+            peer_id=message.peer_id,
+            conversation_message_ids=message.conversation_message_id,
+        )
+        full_message = res.items[0]
+        message_content = FullMessageContent(full_message.text)
 
-    for at in full_message.attachments:
-        if at.type.value == "doc":
-            message_content.attachments.append(
-                MessageAttachment(at.doc.title, at.doc.url, "doc")
-            )
-        if at.type.value == "photo":
-            # sort by height and get the second highest
-            image_url = sorted(at.photo.sizes, key=lambda x: x.height)[-2].url
-            message_content.attachments.append(
-                MessageAttachment(at.photo.text, image_url, "photo")
-            )
+        for at in full_message.attachments:
+            if at.type.value == "doc":
+                message_content.attachments.append(
+                    MessageAttachment(at.doc.title, at.doc.url, "doc")
+                )
+            if at.type.value == "photo":
+                # sort by height and get the second highest
+                image_url = sorted(at.photo.sizes, key=lambda x: x.height)[
+                    -2
+                ].url
+                message_content.attachments.append(
+                    MessageAttachment(at.photo.text, image_url, "photo")
+                )
 
-    bot.telegram_posts.put_nowait(message_content)
-    bot.discord_posts.put_nowait(message_content)
+        bot.telegram_posts.put_nowait(message_content)
 
 
 async def main(my_posts, tgbot_posts):
