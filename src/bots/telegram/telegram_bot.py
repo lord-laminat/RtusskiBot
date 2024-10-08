@@ -5,74 +5,15 @@ import logging
 from aiogram import Dispatcher, Bot, F
 from aiogram.types import (
     Message,
-    InputMediaPhoto,
-    InputMediaVideo,
-    InputMediaDocument,
-    URLInputFile,
 )
 from aiogram_album import AlbumMessage
 from aiogram_album.ttl_cache_middleware import TTLCacheAlbumMiddleware
 
 from bots.config import load_tg_config
-from bots.common.attachments import BaseAttachmentsProvider
 from bots.common.content import FullMessageContent, MessageAttachment
-from bots.common.bot import BaseBot, QueueWrapper
-
-
-class AiogramAttachmentsProvider(BaseAttachmentsProvider):
-    # TODO add videos support
-    async def provide_media(self, attachments: list[MessageAttachment]):
-        media = []
-        for at in attachments:
-            if at.type == "photo":
-                media.append(InputMediaPhoto(media=URLInputFile(url=at.url)))
-            if at.type == "video":
-                media.append(
-                    InputMediaVideo(
-                        media=URLInputFile(url=at.url, filename=at.title)
-                    )
-                )
-        return media
-
-    async def provide_documents(self, attachments: list[MessageAttachment]):
-        documents = []
-        for at in attachments:
-            if at.type == "doc":
-                documents.append(
-                    InputMediaDocument(
-                        media=URLInputFile(url=at.url, filename=at.title)
-                    )
-                )
-        return documents
-
-
-class AiogramBot(BaseBot):
-    def __init__(self, bot, chat_id, attachments_provider):
-        self.bot = bot
-        self.chat_id = chat_id
-        self.attachments_provider = attachments_provider
-
-    async def send_message(self, message_content: FullMessageContent):
-        # basically you want to have this behaviour:
-        # text-only: paste text
-        # attachment-with-text: use text as caption to attachment
-
-        message_text = message_content.text
-        media = await self.attachments_provider.provide_media(
-            message_content.attachments
-        )
-        documents = await self.attachments_provider.provide_documents(
-            message_content.attachments
-        )
-        if not (media or documents):  # that was text based message
-            await self.bot.send_message(self.chat_id, message_text)
-        else:
-            if media:
-                media[0].caption = message_text
-                await self.bot.send_media_group(self.chat_id, media=media)
-            if documents:
-                documents[0].caption = message_text
-                await self.bot.send_media_group(self.chat_id, media=documents)
+from bots.common.bot import QueueWrapper
+from .attachments import AiogramAttachmentsProvider
+from .bot_wrapper import AiogramBot
 
 
 logger = logging.getLogger(__name__)

@@ -1,6 +1,5 @@
 import logging
 import os
-import random
 import asyncio
 
 from vkbottle import Bot
@@ -16,82 +15,13 @@ from bots.common.content import (
     MessageAttachment,
     FullMessageContent,
 )
-from bots.common.attachments import BaseAttachmentsProvider
-from bots.common.bot import BaseBot, QueueWrapper
+from bots.common.bot import QueueWrapper
+from .bot_wrapper import VkbottleBot
+from .attachments import VkBottleAttachmentsProvider
 
 config = load_vk_config(os.getenv("BOTS_CONFIG_PATH"))
 
 logger = logging.getLogger(__name__)
-
-
-class VkBottleAttachmentsProvider(BaseAttachmentsProvider):
-    def __init__(
-        self, photo_uploader, video_uploader, document_uploader, peer_id
-    ):
-        self.photo_uploader = photo_uploader
-        self.video_uploader = video_uploader
-        self.document_uploader = document_uploader
-        self.peer_id = peer_id
-
-    async def provide_media(self, message_content: FullMessageContent):
-        media = []
-        attachments = message_content.attachments
-        for at in attachments:
-            if at.type == "photo":
-                attachment = await self.photo_uploader.upload(
-                    file_source=at.content, peer_id=self.peer_id
-                )
-                media.append(attachment)
-            if at.type == "video":
-                attachment = await self.video_uploader.upload(
-                    file_source=at.content, peer_id=self.peer_id
-                )
-                media.append(attachment)
-        return media
-
-    async def provide_documents(self, message_content: FullMessageContent):
-        attachments = message_content.attachments
-        documents = []
-        for at in attachments:
-            if at.type == "doc":
-                document = await self.document_uploader.upload(
-                    file_source=at.content,
-                    peer_id=self.peer_id,
-                    title=at.title,
-                )
-                documents.append(document)
-        return documents
-
-
-class VkbottleBot(BaseBot):
-    async def send_message(self, message_content: FullMessageContent):
-        # basically you want to have this behaviour:
-        # text-only: paste text
-        # attachment-with-text: use text as caption to attachment
-
-        message_text = message_content.text
-
-        media = await self.attachments_provider.provide_media(message_content)
-        documents = await self.attachments_provider.provide_documents(
-            message_content
-        )
-        # vk does not care about type of attachment
-        all_attachments = media + documents
-        if all_attachments:
-            await bot.api.messages.send(
-                peer_id=self.chat_id,
-                message=message_text,
-                random_id=random.randint(1, 10000),
-                attachment=",".join(all_attachments),
-            )
-        # message does not conatin any useful information
-        if not (media or documents):
-            await bot.api.messages.send(
-                peer_id=self.chat_id,
-                message=message_text,
-                random_id=random.randint(1, 100000),
-            )
-
 
 bot = Bot(config.token)
 bot_wrapper = VkbottleBot(
