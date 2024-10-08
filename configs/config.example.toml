@@ -1,0 +1,12 @@
+[vkbot]
+token = "vkontakte_access_key"
+chat_id = 123
+
+[tgbot]
+token = "telegram_bot_token"
+chat_id = 456
+
+[dsbot]
+token = "discord_bot_token"
+guild_id = 789
+
