@@ -5,7 +5,4 @@ chat_id = 123
 [tgbot]
 token = "telegram_bot_token"
 chat_id = 456
-
-[dsbot]
-token = "discord_bot_token"
-channel_id = 789
+thread_id = 123 # we have topics.

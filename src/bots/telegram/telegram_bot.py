@@ -25,7 +25,14 @@ dp = Dispatcher()
 TTLCacheAlbumMiddleware(router=dp)
 
 bot = Bot(token=config.token)
-bot_wrapper = AiogramBot(bot, config.chat_id, AiogramAttachmentsProvider())
+bot_wrapper = AiogramBot(
+    bot, config.chat_id, AiogramAttachmentsProvider(), config.thread_id
+)
+
+
+@dp.message()
+async def process_message_with_attachments(message: Message):
+    print(message)
 
 
 @dp.message(F.media_group_id, F.caption.contains("#важное"))
@@ -52,7 +59,6 @@ async def process_message_with_attachments(message: AlbumMessage):
             )
 
     await bot.vk_posts.put(FullMessageContent(message.caption))
-    await message.reply("Resending with attachments...")
 
 
 @dp.message(F.text.contains("#важное"))
