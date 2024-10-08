@@ -3,6 +3,7 @@ import logging
 
 from bots.telegram import telegram_bot
 from bots.vk import vkontakte_bot
+from bots.discord import discord_bot
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -21,7 +22,11 @@ async def launch():
         telegram_bot.main(tg_posts, ds_posts, vk_posts)
     )
 
-    await asyncio.gather(vkbot, tgbot, return_exceptions=False)
+    dsbot = asyncio.create_task(
+        discord_bot.main(ds_posts, tg_posts, vk_posts)
+    )
+
+    await asyncio.gather(vkbot, tgbot, dsbot, return_exceptions=False)
 
 
 def main():  # script in pyproject.toml

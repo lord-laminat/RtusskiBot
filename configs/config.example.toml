@@ -8,5 +8,4 @@ chat_id = 456
 
 [dsbot]
 token = "discord_bot_token"
-guild_id = 789
-
+channel_id = 789

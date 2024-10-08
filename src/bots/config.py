@@ -6,7 +6,7 @@ import toml
 @dataclass
 class DiscordBot:
     token: str
-    guild_id: str
+    channel_id: int
 
 
 @dataclass

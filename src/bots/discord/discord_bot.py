@@ -1,30 +1,73 @@
 # Using https://discordpy.readthedocs.io/en/latest/index.html
-import discord
-from discord.ext import commands
-from json import load
+import asyncio
+import os
+import logging
+import requests
 
-# Reading configs.json into config (token, etc.)
-with open("bots/discord/config.json", "r") as config_file:
-    config: dict[str, str] = load(config_file)
+from discord import Client, File, Intents, Message
 
-# This seems to be just necessary for the bot authorization. I did not understand in detail
-intents = discord.Intents.default()
+from bots.config import load_discord_config
+from bots.common.content import Attachments
+
+logger = logging.getLogger(__name__)
+logging.basicConfig(level=logging.DEBUG)
+
+config = load_discord_config(os.getenv("BOTS_CONFIG_PATH"))
+
+intents = Intents.default()
 intents.message_content = True
 
-bot = commands.Bot(command_prefix="/", intents=intents)
-# command_prefix is a string specifying what the commands for the bot look like. By default, "/"
+client: Client = Client(
+    command_prefix="/",
+    intents=intents
+)
+
+class clientCommands:
+    def __init__(self, client: Client, channel_id: int):
+        self.client = client
+        self.channel = None
+        #logger.debug(*self.client.get_all_channels(), self.channel)
+
+    async def send_messages(self, attachments: Attachments):
+        # TODO add videos support
+        # TODO split this function into smaller ones
+        # basically you want to have thi behaviour:
+        # text-only: paste text
+        # attachment-with-text: use text as caption to attachment
+
+        if attachments.text_only():
+            print(*client.get_all_channels())
+            await self.channel.send(content=attachments.text)
+        else:
+            # Getting files' bytes
+            _files = []
+            for attachment in attachments.documents + attachments.images + attachments.videos:
+                response = requests.get(attachment.url)
+                if response.status_code == 200:
+                    _files.append(File(fp=response.content, filename=attachment.title))
+                else: ...
+            await self.channel.send(
+                content=attachments.text,
+                files=_files
+            )
+
+client_commands = clientCommands(client, config.channel_id)
+
+@client.event
+async def on_ready():
+    global client_commands
+    client_commands.channel = client.get_channel(config.channel_id)
+    logger.debug(f"Current channel: '{client_commands.channel}'")
 
 
-# Initialization of the function responsible for the bot's response to the command "<prefix>ping"
-@bot.command("ping")
-async def ping(ctx: commands.context):
-    await ctx.send("pong")
+async def check_query(queue):
+    while True:
+        attachments = await queue.get()
+        await client_commands.send_messages(attachments)
 
 
-# Launching function
-def launch(token):
-    bot.run(token)
-
-
-if __name__ == "__main__":
-    launch()
+async def main(my_posts, tg_posts, vk_posts):
+    #logger.info("starting the application")
+    t1 = asyncio.create_task(check_query(my_posts))
+    t2 = asyncio.create_task(client.start(token=config.token))
+    await asyncio.gather(t1, t2)
