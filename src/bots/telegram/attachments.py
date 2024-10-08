@@ -1,6 +1,12 @@
 from bots.common.attachments import BaseAttachmentsProvider
 from bots.common.content import MessageAttachment
-from aiogram.types import URLInputFile, InputMediaPhoto, InputMediaVideo, InputMediaDocument
+from aiogram.types import (
+    URLInputFile,
+    InputMediaPhoto,
+    InputMediaVideo,
+    InputMediaDocument,
+)
+
 
 class AiogramAttachmentsProvider(BaseAttachmentsProvider):
     # TODO add videos support

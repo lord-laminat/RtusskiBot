@@ -28,35 +28,34 @@ bot = Bot(token=config.token)
 bot_wrapper = AiogramBot(bot, config.chat_id, AiogramAttachmentsProvider())
 
 
-@dp.message(F.media_group_id)
+@dp.message(F.media_group_id, F.caption.contains("#важное"))
 async def process_message_with_attachments(message: AlbumMessage):
-    message_content = FullMessageContent(message.caption)
     for m in message:
         if m.photo:
             photo = m.photo
             bytes_io_file = await bot.download(photo[-1])
-            message_content.attachments.append(
+            FullMessageContent(message.caption).attachments.append(
                 MessageAttachment("", "", "photo", bytes_io_file.read())
             )
         if m.video:
             video = m.video
             bytes_io_file = await bot.download(video[-1])
-            message_content.attachments.append(
+            FullMessageContent(message.caption).attachments.append(
                 MessageAttachment("", "", "photo", bytes_io_file.read())
             )
         if m.document:
             doc = m.document
             filename = doc.file_name
             bytes_io_file = await bot.download(doc)
-            message_content.attachments.append(
+            FullMessageContent(message.caption).attachments.append(
                 MessageAttachment(filename, "", "doc", bytes_io_file.read())
             )
 
-    await bot.vk_posts.put(message_content)
+    await bot.vk_posts.put(FullMessageContent(message.caption))
     await message.reply("Resending with attachments...")
 
 
-@dp.message()
+@dp.message(F.text.contains("#важное"))
 async def process_plain_text(message: Message):
     message_text = message.text or message.caption
     message_content = FullMessageContent(message_text)
@@ -82,13 +81,11 @@ async def process_plain_text(message: Message):
         )
 
     await bot.vk_posts.put(message_content)
-    await message.reply("Resending...")
 
 
-async def main(my_posts, ds_posts, vk_posts):
+async def main(my_posts, vk_posts):
     logger.info("starting the application")
     queue_wrapper = QueueWrapper(bot_wrapper)
-    bot.ds_posts = ds_posts
     bot.vk_posts = vk_posts
     t1 = asyncio.create_task(queue_wrapper.process_posts(my_posts))
     t2 = asyncio.create_task(dp.start_polling(bot, handle_signals=False))

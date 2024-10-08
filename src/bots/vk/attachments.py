@@ -3,9 +3,7 @@ from bots.common.content import FullMessageContent
 
 
 class VkBottleAttachmentsProvider(BaseAttachmentsProvider):
-    def __init__(
-        self, photo_uploader, document_uploader, peer_id
-    ):
+    def __init__(self, photo_uploader, document_uploader, peer_id):
         self.photo_uploader = photo_uploader
         self.document_uploader = document_uploader
         self.peer_id = peer_id

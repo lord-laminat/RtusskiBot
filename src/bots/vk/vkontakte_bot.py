@@ -7,7 +7,6 @@ from vkbottle.tools import (
     LoopWrapper,
     DocMessagesUploader,
     PhotoMessageUploader,
-    VideoUploader,
 )
 
 from bots.config import load_vk_config
@@ -29,7 +28,6 @@ bot_wrapper = VkbottleBot(
     config.chat_id,
     VkBottleAttachmentsProvider(
         PhotoMessageUploader(bot.api),
-        VideoUploader(bot.api),
         DocMessagesUploader(bot.api),
         config.chat_id,
     ),
@@ -41,8 +39,8 @@ async def foo(message):
     # default polling can not provide all the images if there at least 4 images
     # that's why I needed to do another request to get full message and
     # take all the attachments from it.
-
     # see https://dev.vk.com/ru/method/messages.getByConversationMessageId
+
     res = await bot.api.messages.get_by_conversation_message_id(
         peer_id=message.peer_id,
         conversation_message_ids=message.conversation_message_id,
@@ -61,20 +59,15 @@ async def foo(message):
             message_content.attachments.append(
                 MessageAttachment(at.photo.text, image_url, "photo")
             )
-        if at.type.value == "video":
-            # TODO implement video support
-            pass
 
     bot.telegram_posts.put_nowait(message_content)
     bot.discord_posts.put_nowait(message_content)
-    await message.answer("Hi")
 
 
-async def main(my_posts, tgbot_posts, dsbot_posts):
+async def main(my_posts, tgbot_posts):
 
     queue_wrapper = QueueWrapper(bot_wrapper)
     bot.telegram_posts = tgbot_posts
-    bot.discord_posts = dsbot_posts
     bot.loop_wrapper = LoopWrapper(loop=asyncio.get_running_loop())
     t1 = asyncio.create_task(queue_wrapper.process_posts(my_posts))
     t2 = asyncio.create_task(bot.run_polling())

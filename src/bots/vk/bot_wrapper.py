@@ -3,6 +3,7 @@ import random
 from bots.common.bot import BaseBot
 from bots.common.content import FullMessageContent
 
+
 class VkbottleBot(BaseBot):
     async def send_message(self, message_content: FullMessageContent):
         # basically you want to have this behaviour:
