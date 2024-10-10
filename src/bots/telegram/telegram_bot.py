@@ -30,11 +30,6 @@ bot_wrapper = AiogramBot(
 )
 
 
-@dp.message()
-async def process_message_with_attachments(message: Message):
-    print(message)
-
-
 @dp.message(F.media_group_id, F.caption.contains("#важное"))
 async def process_message_with_attachments(message: AlbumMessage):
     for m in message:
@@ -58,7 +53,7 @@ async def process_message_with_attachments(message: AlbumMessage):
                 MessageAttachment(filename, "", "doc", bytes_io_file.read())
             )
 
-    await bot.vk_posts.put(FullMessageContent(message.caption))
+    await  bot.vk_posts.put(FullMessageContent(message.caption))
 
 
 @dp.message(F.text.contains("#важное"))
@@ -90,7 +85,7 @@ async def process_plain_text(message: Message):
 
 
 async def main(my_posts, vk_posts):
-    logger.info("starting the application")
+    logger.debug('starting telergam application')
     queue_wrapper = QueueWrapper(bot_wrapper)
     bot.vk_posts = vk_posts
     t1 = asyncio.create_task(queue_wrapper.process_posts(my_posts))
