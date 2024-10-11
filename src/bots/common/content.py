@@ -13,3 +13,6 @@ class MessageAttachment:
 class FullMessageContent:
     text: str
     attachments: list[MessageAttachment] = field(default_factory=list)
+
+    def add_text(self, text):
+        self.text += f"\n\n{text}"

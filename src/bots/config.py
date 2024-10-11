@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import toml
 
@@ -14,6 +14,7 @@ class TelegramBot:
 class VkontakteBot:
     token: str
     chat_id: str
+    admins: list[int] = field(default_factory=list)
 
 
 def load_tg_config(path: str) -> TelegramBot:

@@ -22,4 +22,4 @@ class QueueWrapper:
             try:
                 await self.bot_wrapper.send_message(message_content)
             except Exception as e:
-                logging.error(e)
+                logging.exception(e)
