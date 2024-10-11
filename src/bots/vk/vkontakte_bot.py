@@ -125,7 +125,6 @@ def make_post_attachments(message):
 
 
 def make_post(message):
-    print(message)
     post_text = make_post_text(message)
     attachments = make_post_attachments(message)
     return FullMessageContent(post_text, attachments)
@@ -134,7 +133,6 @@ def make_post(message):
 #@bot.on.message(ChatIdRule(config.admins))
 @bot.on.message()
 async def foo(message):
-    print(message)
     # default polling can not provide all the images if there at least 4 images
     # that's why I needed to do another request to get full message and
     # take all the attachments from it.
@@ -144,9 +142,8 @@ async def foo(message):
         conversation_message_ids=message.conversation_message_id,
     )
     full_message = response.items[0]
-    bot.telegram_posts.put_nowait(FullMessageContent(full_message.from_id))
-    # post = make_post(full_message)
-    # bot.telegram_posts.put_nowait(post)
+    post = make_post(full_message)
+    bot.telegram_posts.put_nowait(post)
 
 
 async def main(my_posts, tgbot_posts):
