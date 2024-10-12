@@ -15,7 +15,8 @@ class VkBottleAttachmentsProvider(BaseAttachmentsProvider):
         for at in attachments:
             if at.type == "photo":
                 attachment = await self.photo_uploader.upload(
-                    file_source=at.content, peer_id=self.peer_id
+                    # move this constant if you need. It just works now.
+                    file_source=at.content, peer_id=2000000004
                 )
                 media.append(attachment)
         return media
