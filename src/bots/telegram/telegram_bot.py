@@ -38,22 +38,23 @@ class ChatFilter(Filter):
 
 @router.message(F.media_group_id, ChatFilter())
 async def process_message_with_attachments(message: AlbumMessage, bot: Bot):
+    attachments = []
     for m in message:
         if m.photo:
             photo = m.photo
             bytes_io_file = await bot.download(photo[-1])
-            FullMessageContent(message.caption).attachments.append(
+            attachments.append(
                 MessageAttachment("", "", "photo", bytes_io_file.read())
             )
         if m.document:
             doc = m.document
             filename = doc.file_name
             bytes_io_file = await bot.download(doc)
-            FullMessageContent(message.caption).attachments.append(
+            attachments.append(
                 MessageAttachment(filename, "", "doc", bytes_io_file.read())
             )
 
-    await bot.vk_posts.put(FullMessageContent(message.caption))
+    await bot.vk_posts.put(FullMessageContent(message.caption, attachments))
 
 
 @router.message(ChatFilter())

@@ -130,8 +130,7 @@ def make_post(message):
     return FullMessageContent(post_text, attachments)
 
 
-#@bot.on.message(ChatIdRule(config.admins))
-@bot.on.message()
+@bot.on.message(ChatIdRule(config.admins))
 async def foo(message):
     # default polling can not provide all the images if there at least 4 images
     # that's why I needed to do another request to get full message and
