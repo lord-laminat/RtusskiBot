@@ -23,7 +23,7 @@ class VkbottleBot(BaseBot):
                 peer_id=self.chat_id,
                 message=message_text,
                 random_id=random.randint(1, 10000),
-                attachment=",".join(all_attachments),
+                attachment=','.join(all_attachments),
             )
         # message does not conatin any useful information
         if not (media or documents):

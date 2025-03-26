@@ -13,9 +13,9 @@ class AiogramAttachmentsProvider(BaseAttachmentsProvider):
     async def provide_media(self, attachments: list[MessageAttachment]):
         media = []
         for at in attachments:
-            if at.type == "photo":
+            if at.type == 'photo':
                 media.append(InputMediaPhoto(media=URLInputFile(url=at.url)))
-            if at.type == "video":
+            if at.type == 'video':
                 media.append(
                     InputMediaVideo(
                         media=URLInputFile(url=at.url, filename=at.title)
@@ -26,7 +26,7 @@ class AiogramAttachmentsProvider(BaseAttachmentsProvider):
     async def provide_documents(self, attachments: list[MessageAttachment]):
         documents = []
         for at in attachments:
-            if at.type == "doc":
+            if at.type == 'doc':
                 documents.append(
                     InputMediaDocument(
                         media=URLInputFile(url=at.url, filename=at.title)

@@ -21,7 +21,7 @@ from bots.vk.bot_wrapper import VkbottleBot
 from bots.vk.attachments import VkBottleAttachmentsProvider
 from bots.vk.utils import resolve_vk_links
 
-config = load_vk_config(os.getenv("BOTS_CONFIG_PATH"))
+config = load_vk_config(os.getenv('BOTS_CONFIG_PATH'))
 
 logger = logging.getLogger(__name__)
 
@@ -50,23 +50,23 @@ class ChatIdRule(ABCRule):
 
 
 def get_doc_attachment(at):
-    return MessageAttachment(at.doc.title, at.doc.url, "doc")
+    return MessageAttachment(at.doc.title, at.doc.url, 'doc')
 
 
 def get_photo_attachment(at):
     image_url = sorted(at.photo.sizes, key=lambda x: x.height)[-2].url
-    return MessageAttachment(at.photo.text, image_url, "photo")
+    return MessageAttachment(at.photo.text, image_url, 'photo')
 
 
 def parse_attachments(attachments=[]):
     # using empty list is safe here, we do not mutate it anywhere
     custom_attachments = []
     for at in attachments:
-        if at.type.value == "doc":
+        if at.type.value == 'doc':
             custom_attachments.append(get_doc_attachment(at))
-        if at.type.value == "photo":
+        if at.type.value == 'photo':
             custom_attachments.append(get_photo_attachment(at))
-        if at.type.value == "wall":
+        if at.type.value == 'wall':
             if at.wall.attachments:
                 custom_attachments.extend(
                     parse_attachments(at.wall.attachments)
@@ -81,25 +81,25 @@ def parse_attachments(attachments=[]):
 
 
 def get_wall_attachment_text(attachments):
-    text = ""
+    text = ''
     for x in attachments:
-        if x.type.value == "wall":
-            text += f"{x.wall.text}"
+        if x.type.value == 'wall':
+            text += f'{x.wall.text}'
             if x.wall.copy_history:
                 for post in x.wall.copy_history:
-                    text += f"\n\n{post.text}"
+                    text += f'\n\n{post.text}'
     return text.lstrip()
 
 
 def extract_text_from_thread(message):
     text = message.text
-    text += f"\n\n{get_wall_attachment_text(message.attachments)}"
+    text += f'\n\n{get_wall_attachment_text(message.attachments)}'
     if message.fwd_messages:
         for fwd_msg in message.fwd_messages:
             wall_text = get_wall_attachment_text(fwd_msg.attachments)
             fwd_tree_text = extract_text_from_thread(fwd_msg)
-            text += f"\n{fwd_tree_text}"
-            text += f"\n{wall_text}"
+            text += f'\n{fwd_tree_text}'
+            text += f'\n{wall_text}'
 
     return text.lstrip()
 

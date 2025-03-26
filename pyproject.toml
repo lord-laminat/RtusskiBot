@@ -27,7 +27,8 @@ test = [
 ]
 lint = [
     "flake8",
-    "mypy"
+    "mypy",
+    "pre-commit"
 ]
 format = [
   "blue"

@@ -9,7 +9,8 @@ class BaseBot(ABC):
         self.attachments_provider = attachments_provider
 
     @abstractmethod
-    async def send_message(self, message_content): ...
+    async def send_message(self, message_content):
+        ...
 
 
 class QueueWrapper:

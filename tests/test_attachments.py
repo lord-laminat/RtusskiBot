@@ -11,9 +11,9 @@ from bots.common.content import FullMessageContent, MessageAttachment
 async def test_aiogram_document_provider():
     documents = [
         MessageAttachment(
-            title="mydocument.doc",
-            url="https://example.com/mydocument.doc",
-            type="doc",
+            title='mydocument.doc',
+            url='https://example.com/mydocument.doc',
+            type='doc',
         )
     ]
     provider = AiogramAttachmentsProvider()
@@ -28,4 +28,3 @@ async def test_aiogram_document_provider():
 
     assert attachment.media.url == expected.media.url
     assert attachment.media.filename == expected.media.filename
-

@@ -6,8 +6,8 @@ from bots.telegram import telegram_bot
 from bots.vk import vkontakte_bot
 
 logger = logging.getLogger(__name__)
-logging.basicConfig(format="%(module)s %(name)s)", level=logging.INFO)
-logging.info("starting app")
+logging.basicConfig(format='%(module)s %(name)s)', level=logging.INFO)
+logging.info('starting app')
 
 
 async def launch():
@@ -24,5 +24,5 @@ def main():  # script in pyproject.toml
     asyncio.run(launch())
 
 
-if __name__ == "__main__":
+if __name__ == '__main__':
     main()
