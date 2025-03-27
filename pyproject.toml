@@ -19,19 +19,16 @@ dependencies = [
     "cachetools",
     "toml",
     "vkbottle",
+    "asyncpg",
 ]
 [project.optional-dependencies]
-test = [
+develop = [
     "pytest",
-    "pytest-asyncio"
-]
-lint = [
+    "pytest-asyncio",
     "flake8",
     "mypy",
-    "pre-commit"
-]
-format = [
-  "blue"
+    "pre-commit",
+    "blue"
 ]
 
 [tool.black]

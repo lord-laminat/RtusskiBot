@@ -1,10 +1,12 @@
 import asyncio
 import logging
+import os
 
 import asyncpg
 
 from bots.telegram import telegram_bot
 from bots.vk import vkontakte_bot
+from bots.config import load_db_config, load_tg_config, load_vk_config
 
 logger = logging.getLogger(__name__)
 logging.basicConfig(format='%(module)s %(name)s)', level=logging.INFO)
@@ -17,13 +19,23 @@ async def get_db_connection_pool(uri):
 
 
 async def launch():
-    connection_pool = await get_db_connection_pool()
+    config_path = os.environ.get('BOT_CONFIG_PATH', '/etc/botconf.toml')
+    tg_config = load_tg_config(config_path)
+    vk_config = load_vk_config(config_path)
+    db_config = load_db_config(config_path)
+
+    connection_pool = await get_db_connection_pool(db_config.connection_uri)
+
     tg_posts = asyncio.Queue()
     vk_posts = asyncio.Queue()
 
-    vkbot = asyncio.create_task(vkontakte_bot.main(vk_posts, tg_posts))
+    vkbot = asyncio.create_task(
+        vkontakte_bot.main(vk_config, vk_posts, tg_posts)
+    )
 
-    tgbot = asyncio.create_task(telegram_bot.main(tg_posts, vk_posts))
+    tgbot = asyncio.create_task(
+        telegram_bot.main(tg_config, tg_posts, vk_posts)
+    )
     await asyncio.gather(vkbot, tgbot)
 
 

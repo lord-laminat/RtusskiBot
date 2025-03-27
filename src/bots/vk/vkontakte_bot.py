@@ -1,9 +1,7 @@
 import logging
-import os
 import asyncio
 
 from vkbottle import Bot
-from vkbottle.bot import Message
 from vkbottle.tools import (
     LoopWrapper,
     DocMessagesUploader,
@@ -11,7 +9,6 @@ from vkbottle.tools import (
 )
 from vkbottle.dispatch.rules.base import ABCRule
 
-from bots.config import load_vk_config
 from bots.common.content import (
     MessageAttachment,
     FullMessageContent,
@@ -21,20 +18,7 @@ from bots.vk.bot_wrapper import VkbottleBot
 from bots.vk.attachments import VkBottleAttachmentsProvider
 from bots.vk.utils import resolve_vk_links
 
-config = load_vk_config(os.getenv('BOTS_CONFIG_PATH'))
-
 logger = logging.getLogger(__name__)
-
-bot = Bot(config.token)
-bot_wrapper = VkbottleBot(
-    bot,
-    config.chat_id,
-    VkBottleAttachmentsProvider(
-        PhotoMessageUploader(bot.api),
-        DocMessagesUploader(bot.api),
-        config.chat_id,
-    ),
-)
 
 # TODO use regexp to replace [ID|username] to markdown link to https://vk.com/ID
 
@@ -45,7 +29,7 @@ class ChatIdRule(ABCRule):
     def __init__(self, chat_ids):
         self.chat_ids = chat_ids
 
-    async def check(self, event: Message):
+    async def check(self, event):  # type: ignore
         return event.from_id in self.chat_ids
 
 
@@ -58,7 +42,9 @@ def get_photo_attachment(at):
     return MessageAttachment(at.photo.text, image_url, 'photo')
 
 
-def parse_attachments(attachments=[]):
+def parse_attachments(attachments: list | None):
+    if not attachments:
+        attachments = []
     # using empty list is safe here, we do not mutate it anywhere
     custom_attachments = []
     for at in attachments:
@@ -130,26 +116,41 @@ def make_post(message):
     return FullMessageContent(post_text, attachments)
 
 
-@bot.on.message(ChatIdRule(config.admins))
-async def foo(message):
-    # default polling can not provide all the images if there at least 4 images
-    # that's why I needed to do another request to get full message and
-    # take all the attachments from it.
-    # see https://dev.vk.com/ru/method/messages.getByConversationMessageId
-    response = await bot.api.messages.get_by_conversation_message_id(
-        peer_id=message.peer_id,
-        conversation_message_ids=message.conversation_message_id,
+async def main(
+    config,
+    my_posts,
+    tgbot_posts,
+):
+    bot = Bot(config.token)
+    bot_wrapper = VkbottleBot(
+        bot,
+        config.chat_id,
+        VkBottleAttachmentsProvider(
+            PhotoMessageUploader(bot.api),
+            DocMessagesUploader(bot.api),
+            config.chat_id,
+        ),
     )
-    full_message = response.items[0]
-    post = make_post(full_message)
-    bot.telegram_posts.put_nowait(post)
-
-
-async def main(my_posts, tgbot_posts):
-
     queue_wrapper = QueueWrapper(bot_wrapper)
-    bot.telegram_posts = tgbot_posts
+    bot.telegram_posts = tgbot_posts  # type: ignore
     bot.loop_wrapper = LoopWrapper(loop=asyncio.get_running_loop())
+
+    @bot.on.message(ChatIdRule(config.admins))
+    async def foo(message):
+        # default polling can not provide all the images if there at least 4 images
+        # that's why I needed to do another request to get full message and
+        # take all the attachments from it.
+        # see https://dev.vk.com/ru/method/messages.getByConversationMessageId
+        response = await bot.api.messages.get_by_conversation_message_id(
+            peer_id=message.peer_id,
+            conversation_message_ids=message.conversation_message_id,
+        )
+
+        full_message = response.items[0]
+        post = make_post(full_message)
+
+        bot.telegram_posts.put_nowait(post)  # type: ignore
+
     t1 = asyncio.create_task(queue_wrapper.process_posts(my_posts))
     t2 = asyncio.create_task(bot.run_polling())
     await asyncio.gather(t1, t2)

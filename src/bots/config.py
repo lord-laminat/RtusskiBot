@@ -24,7 +24,7 @@ class DBSettings:
 
 def load_db_config(path: str) -> DBSettings:
     data = toml.load(open(path))
-    return TelegramBot(**data['database'])
+    return DBSettings(**data['database'])
 
 
 def load_tg_config(path: str) -> TelegramBot:

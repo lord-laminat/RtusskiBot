@@ -3,6 +3,12 @@ from dataclasses import dataclass
 
 @dataclass
 class SubscriberDTO:
-    username: str
     chat_id: int
-    tag: str
+    username: str
+
+
+@dataclass
+class UserDTO:
+    chat_id: int
+    username: str
+    full_name: str | None
