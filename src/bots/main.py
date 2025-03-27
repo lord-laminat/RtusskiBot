@@ -1,6 +1,7 @@
 import asyncio
 import logging
 
+import asyncpg
 
 from bots.telegram import telegram_bot
 from bots.vk import vkontakte_bot
@@ -10,7 +11,13 @@ logging.basicConfig(format='%(module)s %(name)s)', level=logging.INFO)
 logging.info('starting app')
 
 
+async def get_db_connection_pool(uri):
+    pool = await asyncpg.create_pool(uri)
+    return pool
+
+
 async def launch():
+    connection_pool = await get_db_connection_pool()
     tg_posts = asyncio.Queue()
     vk_posts = asyncio.Queue()
 

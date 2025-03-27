@@ -17,6 +17,7 @@ from bots.common.content import FullMessageContent, MessageAttachment
 from bots.common.bot import QueueWrapper
 from bots.telegram.attachments import AiogramAttachmentsProvider
 from bots.telegram.bot_wrapper import AiogramBot
+from bots.common.models import subscriberDTO
 
 
 logger = logging.getLogger(__name__)
@@ -96,7 +97,8 @@ async def process_message_with_homework_tag(
 async def subscribe_to_homework_notificaitons(
     message: Message, bot: Bot, db_connection
 ):
-    user = ...
+
+    subscriber = SubscriberDTO()
 
 
 async def main(my_posts, vk_posts):
