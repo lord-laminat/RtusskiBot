@@ -31,11 +31,19 @@ TTLCacheAlbumMiddleware(router=router)
 
 
 class ChatFilter(Filter):
+    def __init__(self, check_therad=True):
+        self.check_therad = check_therad
+
     async def __call__(self, message: Message, config):
         # since mailing chat is the same for from messages and to messages
         # we can use chat_id and thred_id here
         if message.chat.id == config.chat_id:
-            return message.message_thread_id == config.thread_id
+            if self.check_therad:
+                if message.message_thread_id == config.thread_id:
+                    return True
+                else:
+                    return False
+            return True
         return False
 
 
@@ -89,7 +97,7 @@ async def process_plain_text(message: Message, bot: Bot):
     await bot.vk_posts.put(message_content)  # type: ignore
 
 
-@router.message(ChatFilter(), lambda msg: '#дз' in msg.text)
+@router.message(ChatFilter(check_therad=False), lambda msg: '#дз' in msg.text)
 async def process_message_with_homework_tag(
     message: Message, bot: Bot, subscriber_repo: BaseSubscriberRepo
 ):
@@ -98,7 +106,7 @@ async def process_message_with_homework_tag(
         await message.send_copy(subscriber.chat_id)
 
 
-@router.message(Command('subscribeToHomeworkNotifications'))
+@router.message(Command('subscribe'))
 async def subscribe_to_homework_notificaitons(
     message: Message, bot: Bot, subscriber_repo: BaseSubscriberRepo
 ):
@@ -106,10 +114,21 @@ async def subscribe_to_homework_notificaitons(
     subscriber = SubscriberDTO(
         message.from_user.id,  # type: ignore
         message.from_user.username,  # type: ignore
-        message.from_user.full_name,  # type: ignore
     )
     await subscriber_repo.add_subscriber(subscriber)
     await message.reply('User added succesfully')
+
+
+@router.message(Command('unsubscribe'))
+async def subscribe_to_homework_notificaitons(
+    message: Message, bot: Bot, subscriber_repo: BaseSubscriberRepo
+):
+    subscriber = SubscriberDTO(
+        message.from_user.id,  # type: ignore
+        message.from_user.username,  # type: ignore
+    )
+    await subscriber_repo.remove_subscriber(subscriber)
+    await message.reply('Subscribed removed succesfully')
 
 
 @router.message(Command('start'))
@@ -120,6 +139,12 @@ async def start_command(message: Message, bot: Bot, user_repo: BaseUserRepo):
     user = UserDTO(chat_id, username, full_name)  # type: ignore
     await user_repo.add_user(user)
     await message.reply(f'Helo {username}!')
+
+
+@router.message()
+async def echo(message: Message, bot: Bot, user_repo: BaseUserRepo):
+    logger.info(message)
+    await message.reply(message.text)
 
 
 async def main(config, my_posts, vk_posts, connection_pool):

@@ -48,7 +48,7 @@ class PostgresSubscriberRepo(BaseSubscriberRepo):
         return [SubscriberDTO(x[0], x[1]) for x in res]
 
     async def add_subscriber(self, subscriber: SubscriberDTO):
-        query = 'INSERT INTO subscribers VALUES ($1, $2, $3);'
+        query = 'INSERT INTO subscribers VALUES ($1, $2);'
         await self.connection.execute(
             query, subscriber.chat_id, subscriber.username
         )

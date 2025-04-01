@@ -1,14 +1,6 @@
 FROM python:3.10-slim-buster AS base
 
-ENV PYTHONUNBUFFERED=1 \
-
-    PYTHONDONTWRITEBYTECODE=1 \
-
-    PIP_NO_CACHE_DIR=off \
-
-    VIRTUAL_ENV=/venv \
-
-    PATH="/venv/bin:${PATH}"
+ENV PYTHONUNBUFFERED=1 PYTHONDONTWRITEBYTECODE=1 PIP_NO_CACHE_DIR=off VIRTUAL_ENV=/venv PATH="/venv/bin:${PATH}"
 
 FROM base AS build
 
@@ -17,10 +9,13 @@ WORKDIR /app
 COPY ./pyproject.toml ./pyproject.toml
 
 
-COPY ./src /src
+COPY ./src ./src
 
-RUN python -m build -w; \
-    python -m pip install --no-deps --no-cache-dir dist/*.whl
+RUN set -eux; \
+    python -m venv /venv; \
+    /venv/bin/pip install build; \
+    /venv/bin/python -m build -w; \
+    /venv/bin/pip install --no-deps --no-cache-dir dist/*.whl
 
 FROM base
 
