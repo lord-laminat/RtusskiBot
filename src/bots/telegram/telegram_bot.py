@@ -19,6 +19,7 @@ from bots.telegram.attachments import AiogramAttachmentsProvider
 from bots.telegram.bot_wrapper import AiogramBot
 from bots.common.models import SubscriberDTO, UserDTO
 from bots.common.db import BaseSubscriberRepo, BaseUserRepo
+from bots.telegram.middleware import DbMiddleware
 
 
 logger = logging.getLogger(__name__)
@@ -121,12 +122,12 @@ async def start_command(message: Message, bot: Bot, user_repo: BaseUserRepo):
     await message.reply(f'Helo {username}!')
 
 
-async def main(config, my_posts, vk_posts):
+async def main(config, my_posts, vk_posts, connection_pool):
     dp = Dispatcher()
     dp.include_router(router)
 
     dp['config'] = config
-
+    dp.message.middleware(DbMiddleware(connection_pool))
     bot = Bot(
         token=config.token,
         default=DefaultBotProperties(

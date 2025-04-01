@@ -1,6 +1,8 @@
 from abc import ABC, abstractmethod
 import logging
 
+logger = logging.getLogger(__name__)
+
 
 class BaseBot(ABC):
     def __init__(self, bot, chat_id, attachments_provider):
@@ -23,4 +25,4 @@ class QueueWrapper:
             try:
                 await self.bot_wrapper.send_message(message_content)
             except Exception as e:
-                logging.exception(e)
+                logger.exception(e)

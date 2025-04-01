@@ -43,31 +43,34 @@ class BaseUserRepo(ABC):
 
 class PostgresSubscriberRepo(BaseSubscriberRepo):
     async def get_all_subscribers(self) -> list[SubscriberDTO]:
-        query = 'SELECT chat_id, username, tag from subscribers;'
-        res = self.connection.fetchmany(query)
+        query = 'SELECT chat_id, username from subscribers;'
+        res = await self.connection.fetchmany(query)
         return [SubscriberDTO(x[0], x[1]) for x in res]
 
     async def add_subscriber(self, subscriber: SubscriberDTO):
         query = 'INSERT INTO subscribers VALUES ($1, $2, $3);'
         await self.connection.execute(
-            query, (subscriber.chat_id, subscriber.username)
+            query, subscriber.chat_id, subscriber.username
         )
 
     async def remove_subscriber(self, subscriber):
         query = 'DELETE FROM subscribers WHERE chat_id = $1;'
-        await self.connection.execute(query, (subscriber.chat_id))
+        await self.connection.execute(query, subscriber.chat_id)
 
     async def get_subscriber(self, chat_id) -> SubscriberDTO:
         query = 'SELECT chat_id, username FROM subscribers WHERE chat_id = $1;'
-        res = self.connection.fetchrow(query, (chat_id,))
+        res = await self.connection.fetchrow(query, chat_id)
         return SubscriberDTO(res[0], res[1])
 
 
 class PostgresUserRepo(BaseUserRepo):
     async def add_user(self, user: UserDTO):
-        query = 'INSERT INTO USERS VALUES ($1, $2, $3);'
+        query = 'INSERT INTO users VALUES ($1, $2, $3) ON CONFLICT DO NOTHING;'
         await self.connection.execute(
-            query, (user.chat_id, user.username, user.full_name)
+            query,
+            user.chat_id,
+            user.username,
+            user.full_name,
         )
 
     async def get_all_users(self) -> list[UserDTO]:
@@ -77,5 +80,5 @@ class PostgresUserRepo(BaseUserRepo):
 
     async def get_user(self, chat_id) -> UserDTO:
         query = 'SELECT chat_id, username, full_name from users where chat_id = $1;'
-        res = await self.connection.fetchrow(query, (chat_id,))
+        res = await self.connection.fetchrow(query, chat_id)
         return UserDTO(res[0], res[1], res[2])

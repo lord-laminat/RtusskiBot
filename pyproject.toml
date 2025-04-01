@@ -28,7 +28,7 @@ develop = [
     "flake8",
     "mypy",
     "pre-commit",
-    "blue"
+    "blue",
 ]
 
 [tool.black]
