@@ -16,5 +16,5 @@
 ## Запуск
 
 1. Положить файл botconf.toml в директорию configs (см пример в configs/config.example.toml)
-2. Отредактировать .example.env
+2. Отредактировать .example.env (и переименовать его в .env)
 3. `docker --profile mireabot compose up`
