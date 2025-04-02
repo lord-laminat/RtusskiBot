@@ -1,8 +1,11 @@
 [vkbot]
-token = "vkontakte_access_key"
+token = "vktoken"
 chat_id = 123
 
 [tgbot]
-token = "telegram_bot_token"
+token = "tgtoken"
 chat_id = 456
 thread_id = 123 # we have topics.
+
+[database]
+connection_uri = "postgres://user:password@host:port/dbname"

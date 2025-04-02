@@ -1,7 +1,7 @@
 -- +goose Up
 -- +goose StatementBegin
 CREATE TABLE users(
-  chat_id INTEGER NOT NULL,
+  chat_id BIGINT NOT NULL,
   username TEXT,
   full_user_name TEXT,
   created_at TIMESTAMP DEFAULT NOW(),
@@ -9,9 +9,8 @@ CREATE TABLE users(
   PRIMARY KEY(chat_id)
 );
 CREATE TABLE subscribers(
-  user_id INTEGER REFERENCES users(chat_id),
-  channel_id INTEGER NOT NULL,
-  thread_id INTEGER,
+  user_id BIGINT REFERENCES users(chat_id),
+  channel_id BIGINT NOT NULL,
   created_at TIMESTAMP DEFAULT NOW(),
   last_modified TIMESTAMP DEFAULT NOW(),
   PRIMARY KEY(user_id)

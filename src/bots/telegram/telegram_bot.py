@@ -1,6 +1,5 @@
 import asyncio
 import logging
-from re import sub
 
 from aiogram import Dispatcher, Bot, F, Router
 from aiogram.filters import Command
@@ -97,54 +96,60 @@ async def process_plain_text(message: Message, bot: Bot):
     await bot.vk_posts.put(message_content)  # type: ignore
 
 
-@router.message(ChatFilter(check_therad=False), lambda msg: '#дз' in msg.text)
+@router.message(lambda msg: '#дз' in msg.text)
 async def process_message_with_homework_tag(
-    message: Message, bot: Bot, subscriber_repo: BaseSubscriberRepo
+    message: Message, subscriber_repo: BaseSubscriberRepo
 ):
-    subscribers = await subscriber_repo.get_all_subscribers()
+    subscribers = await subscriber_repo.get_all_channel_subscribers(
+        channel_id=message.chat.id
+    )
     for subscriber in subscribers:
-        await message.send_copy(subscriber.chat_id)
+        await message.send_copy(subscriber.user_id)
 
 
 @router.message(Command('subscribe'))
 async def subscribe_to_homework_notificaitons(
-    message: Message, bot: Bot, subscriber_repo: BaseSubscriberRepo
+    message: Message, subscriber_repo: BaseSubscriberRepo
 ):
-    print(message)
     subscriber = SubscriberDTO(
         message.from_user.id,  # type: ignore
-        message.from_user.username,  # type: ignore
+        message.chat.id,  # type: ignore
     )
-    await subscriber_repo.add_subscriber(subscriber)
-    await message.reply('User added succesfully')
+    subscriber_exists = await subscriber_repo.check_subscriber_exists(
+        message.from_user.id  # type: ignore
+    )
+    if subscriber_exists:
+        await message.reply('You are already a subscriber')
+    else:
+        await subscriber_repo.add_subscriber(subscriber)
+        await message.reply('You are now a subscriber')
 
 
 @router.message(Command('unsubscribe'))
-async def subscribe_to_homework_notificaitons(
-    message: Message, bot: Bot, subscriber_repo: BaseSubscriberRepo
+async def unsubscribe_to_homework_notificaitons(
+    message: Message, subscriber_repo: BaseSubscriberRepo
 ):
-    subscriber = SubscriberDTO(
-        message.from_user.id,  # type: ignore
-        message.from_user.username,  # type: ignore
-    )
-    await subscriber_repo.remove_subscriber(subscriber)
-    await message.reply('Subscribed removed succesfully')
+    user_id = message.from_user.id  # type: ignore
+    subscriber_exists = await subscriber_repo.check_subscriber_exists(user_id)
+    if subscriber_exists:
+        await subscriber_repo.remove_subscriber(user_id)
+        await message.reply('Subscribed removed succesfully')
+    else:
+        await message.reply('You are not a subscriber')
 
 
 @router.message(Command('start'))
-async def start_command(message: Message, bot: Bot, user_repo: BaseUserRepo):
-    chat_id = message.from_user.id  # type: ignore
+async def start_command(message: Message, user_repo: BaseUserRepo):
     username = message.from_user.username  # type: ignore
-    full_name = message.from_user.full_name  # type: ignore
-    user = UserDTO(chat_id, username, full_name)  # type: ignore
+    user_id = message.from_user.id  # type: ignore
+    user = UserDTO(
+        chat_id=user_id,
+        username=username,
+        full_user_name=message.from_user.full_name,  # type: ignore
+    )
+
     await user_repo.add_user(user)
     await message.reply(f'Helo {username}!')
-
-
-@router.message()
-async def echo(message: Message, bot: Bot, user_repo: BaseUserRepo):
-    logger.info(message)
-    await message.reply(message.text)
 
 
 async def main(config, my_posts, vk_posts, connection_pool):

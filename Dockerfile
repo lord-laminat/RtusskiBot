@@ -15,13 +15,10 @@ RUN set -eux; \
     python -m venv /venv; \
     /venv/bin/pip install build; \
     /venv/bin/python -m build -w; \
-    /venv/bin/pip install --no-deps --no-cache-dir dist/*.whl
+    /venv/bin/pip install --no-cache-dir dist/*.whl
 
 FROM base
 
-ENV BOT_CONFIG_PATH=/app/botconf.toml
-
-COPY ./botconf.toml ./botconf.toml
 COPY --from=build /venv /venv
 
 CMD ["bots"]
