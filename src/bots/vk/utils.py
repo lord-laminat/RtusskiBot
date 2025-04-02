@@ -1,7 +1,7 @@
 import re
 
 
-PATTERN = re.compile(r"\[(\S+)\|(.+)\]")
+PATTERN = re.compile(r'\[(\S+)\|(.+)\]')
 
 
 def resolve_vk_links(text):

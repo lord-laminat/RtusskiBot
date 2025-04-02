@@ -1,7 +1,11 @@
+import logging
+
 from bots.common.bot import BaseBot
 from bots.common.content import FullMessageContent
 
 from aiogram.enums import ParseMode
+
+logger = logging.getLogger(__name__)
 
 
 class AiogramBot(BaseBot):
@@ -11,23 +15,29 @@ class AiogramBot(BaseBot):
         self.attachments_provider = attachments_provider
         self.message_thread_id = message_thread_id
 
-    async def send_media(self, media, caption=None):
+    async def send_media(self, media, caption: str | None = None):
         if caption:
             media[0].caption = caption
-        await self.bot.send_media_group(
-            self.chat_id,
-            media=media,
-            message_thread_id=self.message_thread_id,
-        )
+        try:
+            await self.bot.send_media_group(
+                self.chat_id,
+                media=media,
+                message_thread_id=self.message_thread_id,
+            )
+        except Exception as e:
+            logger.exception(e)
 
-    async def send_documents(self, documents, caption=None):
+    async def send_documents(self, documents, caption: str | None = None):
         if caption:
             documents[0].caption = caption
-        await self.bot.send_media_group(
-            self.chat_id,
-            media=documents,
-            message_thread_id=self.message_thread_id,
-        )
+        try:
+            await self.bot.send_media_group(
+                self.chat_id,
+                media=documents,
+                message_thread_id=self.message_thread_id,
+            )
+        except Exception as e:
+            logger.exception(e)
 
     async def send_message(self, message_content: FullMessageContent):
         # basically you want to have this behaviour:
@@ -35,12 +45,10 @@ class AiogramBot(BaseBot):
         # attachment-with-text: use text as caption to attachment
 
         message_text = message_content.text
-        only_text = len(message_text) >= 1000
-        media = await self.attachments_provider.provide_media(
-            message_content.attachments
-        )
+        text_only = len(message_text) >= 1000
+        media = await self.attachments_provider.provide_media(message_content)
         documents = await self.attachments_provider.provide_documents(
-            message_content.attachments
+            message_content
         )
         if not (media or documents):  # that was text based message
             await self.bot.send_message(
@@ -51,19 +59,22 @@ class AiogramBot(BaseBot):
             )
         else:
             if media:
-                if only_text:
+                if text_only:
                     await self.send_media(media)
                 else:
                     await self.send_media(media, caption=message_text)
             if documents:
-                if only_text:
+                if text_only:
                     await self.send_documents(documents)
                 else:
                     await self.send_documents(documents, caption=message_text)
-            if only_text:
-                await self.bot.send_message(
-                    self.chat_id,
-                    message_text,
-                    message_thread_id=self.message_thread_id,
-                    parse_mode=ParseMode.HTML,
-                )
+            if text_only:
+                try:
+                    await self.bot.send_message(
+                        self.chat_id,
+                        message_text,
+                        message_thread_id=self.message_thread_id,
+                        parse_mode=ParseMode.HTML,
+                    )
+                except Exception as e:
+                    logger.error(e)

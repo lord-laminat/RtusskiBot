@@ -1,9 +1,0 @@
-[Unit]
-Description=rtusskiy proxy bot
-
-[Service]
-Environment=BOTS_CONFIG_PATH=/opt/rutsskibot/configs/config.toml
-ExecStart=/opt/rtusskibot/.venv/bin/bots
-
-[Install]
-WantedBy=multi-user.target
