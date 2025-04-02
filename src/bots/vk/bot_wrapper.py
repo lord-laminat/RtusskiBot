@@ -1,7 +1,10 @@
 import random
+import logging
 
 from bots.common.bot import BaseBot
 from bots.common.content import FullMessageContent
+
+logger = logging.getLogger(__name__)
 
 
 class VkbottleBot(BaseBot):
@@ -19,16 +22,22 @@ class VkbottleBot(BaseBot):
         # vk does not care about type of attachment
         all_attachments = media + documents
         if all_attachments:
-            await self.bot.api.messages.send(
-                peer_id=self.chat_id,
-                message=message_text,
-                random_id=random.randint(1, 10000),
-                attachment=','.join(all_attachments),
-            )
+            try:
+                await self.bot.api.messages.send(
+                    peer_id=self.chat_id,
+                    message=message_text,
+                    random_id=random.randint(1, 10000),
+                    attachment=','.join(all_attachments),
+                )
+            except Exception as e:
+                logger.exception(e)
         # message does not conatin any useful information
         if not (media or documents):
-            await self.bot.api.messages.send(
-                peer_id=self.chat_id,
-                message=message_text,
-                random_id=random.randint(1, 100000),
-            )
+            try:
+                await self.bot.api.messages.send(
+                    peer_id=self.chat_id,
+                    message=message_text,
+                    random_id=random.randint(1, 100000),
+                )
+            except Exception as e:
+                logger.exception(e)

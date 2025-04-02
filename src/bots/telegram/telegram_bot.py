@@ -9,6 +9,7 @@ from aiogram.types import (
 from aiogram.filters import Filter
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
+from aiogram.utils.formatting import Pre
 from aiogram_album import AlbumMessage
 from aiogram_album.ttl_cache_middleware import TTLCacheAlbumMiddleware
 
@@ -44,6 +45,16 @@ class ChatFilter(Filter):
                     return False
             return True
         return False
+
+
+@router.message(Command('info'))
+async def handle_info_command(message: Message):
+    message_text = (
+        f'chat_id: <code>{str(message.chat.id)}</code>'
+        + '\n'
+        + f'thread_id: <code>{message.message_thread_id}</code>'
+    )
+    await message.reply(message_text)
 
 
 @router.message(F.media_group_id, ChatFilter())
@@ -139,9 +150,8 @@ async def unsubscribe_to_homework_notificaitons(
 
 
 @router.message(Command('start'))
-async def start_command(message: Message, user_repo: BaseUserRepo):
+async def handle_start_command(message: Message, user_repo: BaseUserRepo):
     username = message.from_user.username  # type: ignore
-    print('TELEGRAM', message)
     user_id = message.from_user.id  # type: ignore
     user = UserDTO(
         chat_id=user_id,

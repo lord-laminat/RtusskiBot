@@ -13,13 +13,12 @@ name = "rtu_bot"
 version = "0.0.1"
 requires-python = ">=3.10"
 dependencies = [
-    "discord.py",
-    "aiogram",
-    "aiogram_album",
-    "cachetools",
-    "toml",
+    "aiogram==3.19.0",
+    "aiogram_album==0.0.4b0",
+    "cachetools==5.5.2",
+    "toml==0.10.2",
     "vkbottle==4.4.2",
-    "asyncpg",
+    "asyncpg==0.30.0",
 ]
 [project.optional-dependencies]
 develop = [

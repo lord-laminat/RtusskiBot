@@ -20,10 +20,6 @@ from bots.vk.utils import resolve_vk_links
 
 logger = logging.getLogger(__name__)
 
-# TODO use regexp to replace [ID|username] to markdown link to https://vk.com/ID
-
-# match something like [Non-Space|Non-Space]
-
 
 class ChatIdRule(ABCRule):
     def __init__(self, chat_ids):
@@ -135,24 +131,24 @@ async def main(
     bot.telegram_posts = tgbot_posts  # type: ignore
     bot.loop_wrapper = LoopWrapper(loop=asyncio.get_running_loop())
 
+    @bot.on.message(text='/info')
+    async def bar(message):
+        text = f'peer id: {message.peer_id}\nuser id: {message.from_id}'
+        await message.answer(text)
+
     @bot.on.message(ChatIdRule(config.admins))
     async def foo(message):
         # default polling can not provide all the images if there at least 4 images
         # that's why I needed to do another request to get full message and
         # take all the attachments from it.
         # see https://dev.vk.com/ru/method/messages.getByConversationMessageId
-        print('HERE', message)
         response = await bot.api.messages.get_by_conversation_message_id(
             peer_id=message.peer_id,
             conversation_message_ids=message.conversation_message_id,
         )
         full_message = response.items[0]
         post = make_post(full_message)
-        bot.telegram_posts.put_nowait(post)
-
-    @bot.on.message()
-    async def bar(message):
-        print('HERE2', message)
+        bot.telegram_posts.put_nowait(post)  # type: ignore
 
     t1 = asyncio.create_task(queue_wrapper.process_posts(my_posts))
     t2 = asyncio.create_task(bot.run_polling())

@@ -1,9 +1,9 @@
 [vkbot]
-token = "vktoken"
+token = "vkontakte_access_key"
 chat_id = 123
 
 [tgbot]
-token = "tgtoken"
+token = "telegram_bot_token"
 chat_id = 456
 thread_id = 123 # we have topics.
 

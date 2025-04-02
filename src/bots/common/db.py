@@ -116,7 +116,6 @@ class PostgresUserRepo(BaseUserRepo):
     async def get_user(self, user_id) -> UserDTO | None:
         query = 'SELECT chat_id, username, full_user_name from users where chat_id = $1;'
         res = await self.connection.fetchrow(query, user_id)
-        print(res)
         if res:
             return UserDTO(
                 chat_id=res[0], username=res[1], full_user_name=res[2]
