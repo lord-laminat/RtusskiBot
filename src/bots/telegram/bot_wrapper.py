@@ -36,11 +36,9 @@ class AiogramBot(BaseBot):
 
         message_text = message_content.text
         only_text = len(message_text) >= 1000
-        media = await self.attachments_provider.provide_media(
-            message_content.attachments
-        )
+        media = await self.attachments_provider.provide_media(message_content)
         documents = await self.attachments_provider.provide_documents(
-            message_content.attachments
+            message_content
         )
         if not (media or documents):  # that was text based message
             await self.bot.send_message(

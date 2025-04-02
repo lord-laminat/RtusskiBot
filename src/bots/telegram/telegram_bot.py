@@ -141,6 +141,7 @@ async def unsubscribe_to_homework_notificaitons(
 @router.message(Command('start'))
 async def start_command(message: Message, user_repo: BaseUserRepo):
     username = message.from_user.username  # type: ignore
+    print('TELEGRAM', message)
     user_id = message.from_user.id  # type: ignore
     user = UserDTO(
         chat_id=user_id,
