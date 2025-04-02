@@ -15,8 +15,6 @@
 
 ## Запуск
 
-1. Создайте венв и активируйте его
-2. установите все зависимости `pip install .`
-3. Создайте конфиг файл (см пример в configs/config.example.toml)
-4. Установите переменную окружения BOTS_CONFIG_PATH (значение - абсолютный путь к вашему файлу с конфигами) 
-5. Запустите приложение (введите bots в терминале)
+1. Положить файл botconf.toml в директорию configs (см пример в configs/config.example.toml)
+2. Отредактировать .example.env
+3. `docker --profile mireabot compose up`
