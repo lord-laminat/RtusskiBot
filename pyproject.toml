@@ -18,7 +18,7 @@ dependencies = [
     "aiogram_album",
     "cachetools",
     "toml",
-    "vkbottle",
+    "vkbottle==4.4.1",
     "asyncpg",
 ]
 [project.optional-dependencies]
