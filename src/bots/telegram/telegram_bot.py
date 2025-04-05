@@ -9,7 +9,6 @@ from aiogram.types import (
 from aiogram.filters import Filter
 from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
-from aiogram.utils.formatting import Pre
 from aiogram_album import AlbumMessage
 from aiogram_album.ttl_cache_middleware import TTLCacheAlbumMiddleware
 
@@ -107,7 +106,7 @@ async def process_plain_text(message: Message, bot: Bot):
     await bot.vk_posts.put(message_content)  # type: ignore
 
 
-@router.message(lambda msg: '#дз' in msg.text)
+@router.message(F.txt.startswith('#дз'))
 async def process_message_with_homework_tag(
     message: Message, subscriber_repo: BaseSubscriberRepo
 ):
