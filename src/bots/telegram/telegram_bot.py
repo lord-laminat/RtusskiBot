@@ -106,7 +106,7 @@ async def process_plain_text(message: Message, bot: Bot):
     await bot.vk_posts.put(message_content)  # type: ignore
 
 
-@router.message(F.txt.startswith('#дз'))
+@router.message(F.text.startswith('#дз'))
 async def process_message_with_homework_tag(
     message: Message, subscriber_repo: BaseSubscriberRepo
 ):
